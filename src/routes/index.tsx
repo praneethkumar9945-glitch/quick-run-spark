@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import watchGold from "@/assets/watch-gold.jpg";
-import watchSteel from "@/assets/watch-steel.jpg";
-import watchRosegold from "@/assets/watch-rosegold.jpg";
-import watchBlack from "@/assets/watch-black.jpg";
+import watchGold from "@/assets/watch-gold.png";
+import watchSteel from "@/assets/watch-steel.png";
+import watchRosegold from "@/assets/watch-rosegold.png";
+import watchBlack from "@/assets/watch-black.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,13 +35,14 @@ function Index() {
     const cleanups: Array<() => void> = [];
 
     (async () => {
-      const [{ gsap }, { ScrollTrigger }, { ScrollToPlugin }, THREE, { OBJLoader }] =
+      const [{ gsap }, { ScrollTrigger }, { ScrollToPlugin }, THREE, { OBJLoader }, { RoomEnvironment }] =
         await Promise.all([
           import("gsap"),
           import("gsap/ScrollTrigger"),
           import("gsap/ScrollToPlugin"),
           import("three"),
           import("three/examples/jsm/loaders/OBJLoader.js"),
+          import("three/examples/jsm/environments/RoomEnvironment.js"),
         ]);
       if (disposed) return;
       gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
@@ -67,9 +68,17 @@ function Index() {
           this.renderer.shadowMap.enabled = true;
           this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
           this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+          this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+          this.renderer.toneMappingExposure = 1.1;
           document.body.appendChild(this.renderer.domElement);
 
           this.scene = new THREE.Scene();
+
+          // Image-based lighting for realistic metal/paint reflections.
+          const pmrem = new THREE.PMREMGenerator(this.renderer);
+          const envScene = new RoomEnvironment();
+          this.scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+          pmrem.dispose();
 
           for (let ii = 0; ii < this.views.length; ++ii) {
             const view = this.views[ii]!;
@@ -92,7 +101,7 @@ function Index() {
           this.light.position.y = -20;
           this.scene.add(this.light);
 
-          this.softLight = new THREE.AmbientLight(0xffffff, 2);
+          this.softLight = new THREE.AmbientLight(0xffffff, 0.4);
           this.scene.add(this.softLight);
           const fill = new THREE.DirectionalLight(0xdceafb, 2);
           fill.position.set(-60, 80, 40);
@@ -301,11 +310,11 @@ function Index() {
         "/models/jetliner.obj",
         (aircraft) => {
           if (disposed) return;
-          const paint = new THREE.MeshStandardMaterial({ color: 0xf0f3f4, metalness: 0.42, roughness: 0.35, side: THREE.DoubleSide });
-          const wingPaint = new THREE.MeshStandardMaterial({ color: 0xcbd4dc, metalness: 0.55, roughness: 0.34, side: THREE.DoubleSide });
-          const navy = new THREE.MeshStandardMaterial({ color: 0x16456c, metalness: 0.35, roughness: 0.36, side: THREE.DoubleSide });
-          const glass = new THREE.MeshStandardMaterial({ color: 0x122537, metalness: 0.5, roughness: 0.13 });
-          const intake = new THREE.MeshStandardMaterial({ color: 0x222b32, metalness: 0.64, roughness: 0.3, side: THREE.DoubleSide });
+          const paint = new THREE.MeshPhysicalMaterial({ color: 0xf4f6f8, metalness: 0.35, roughness: 0.28, clearcoat: 1, clearcoatRoughness: 0.12, side: THREE.DoubleSide });
+          const wingPaint = new THREE.MeshPhysicalMaterial({ color: 0xd3dbe2, metalness: 0.75, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.2, side: THREE.DoubleSide });
+          const navy = new THREE.MeshPhysicalMaterial({ color: 0x16456c, metalness: 0.4, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.15, side: THREE.DoubleSide });
+          const glass = new THREE.MeshPhysicalMaterial({ color: 0x0e1c2a, metalness: 0.1, roughness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05 });
+          const intake = new THREE.MeshStandardMaterial({ color: 0x1a2126, metalness: 0.9, roughness: 0.25, side: THREE.DoubleSide });
           aircraft.traverse((child) => {
             if (!(child instanceof THREE.Mesh)) return;
             child.material = child.name.includes("Tail") ? navy : child.name.includes("Wings") || child.name.includes("TurboFans") ? wingPaint : paint;

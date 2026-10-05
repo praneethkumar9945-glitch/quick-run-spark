@@ -35,13 +35,14 @@ function Index() {
     const cleanups: Array<() => void> = [];
 
     (async () => {
-      const [{ gsap }, { ScrollTrigger }, { ScrollToPlugin }, THREE, { OBJLoader }] =
+      const [{ gsap }, { ScrollTrigger }, { ScrollToPlugin }, THREE, { OBJLoader }, { RoomEnvironment }] =
         await Promise.all([
           import("gsap"),
           import("gsap/ScrollTrigger"),
           import("gsap/ScrollToPlugin"),
           import("three"),
           import("three/examples/jsm/loaders/OBJLoader.js"),
+          import("three/examples/jsm/environments/RoomEnvironment.js"),
         ]);
       if (disposed) return;
       gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
@@ -309,11 +310,11 @@ function Index() {
         "/models/jetliner.obj",
         (aircraft) => {
           if (disposed) return;
-          const paint = new THREE.MeshStandardMaterial({ color: 0xf0f3f4, metalness: 0.42, roughness: 0.35, side: THREE.DoubleSide });
-          const wingPaint = new THREE.MeshStandardMaterial({ color: 0xcbd4dc, metalness: 0.55, roughness: 0.34, side: THREE.DoubleSide });
-          const navy = new THREE.MeshStandardMaterial({ color: 0x16456c, metalness: 0.35, roughness: 0.36, side: THREE.DoubleSide });
-          const glass = new THREE.MeshStandardMaterial({ color: 0x122537, metalness: 0.5, roughness: 0.13 });
-          const intake = new THREE.MeshStandardMaterial({ color: 0x222b32, metalness: 0.64, roughness: 0.3, side: THREE.DoubleSide });
+          const paint = new THREE.MeshPhysicalMaterial({ color: 0xf4f6f8, metalness: 0.35, roughness: 0.28, clearcoat: 1, clearcoatRoughness: 0.12, side: THREE.DoubleSide });
+          const wingPaint = new THREE.MeshPhysicalMaterial({ color: 0xd3dbe2, metalness: 0.75, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.2, side: THREE.DoubleSide });
+          const navy = new THREE.MeshPhysicalMaterial({ color: 0x16456c, metalness: 0.4, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.15, side: THREE.DoubleSide });
+          const glass = new THREE.MeshPhysicalMaterial({ color: 0x0e1c2a, metalness: 0.1, roughness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05 });
+          const intake = new THREE.MeshStandardMaterial({ color: 0x1a2126, metalness: 0.9, roughness: 0.25, side: THREE.DoubleSide });
           aircraft.traverse((child) => {
             if (!(child instanceof THREE.Mesh)) return;
             child.material = child.name.includes("Tail") ? navy : child.name.includes("Wings") || child.name.includes("TurboFans") ? wingPaint : paint;

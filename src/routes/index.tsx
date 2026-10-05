@@ -72,13 +72,13 @@ function Index() {
           this.renderer.toneMappingExposure = 1.1;
           document.body.appendChild(this.renderer.domElement);
 
+          this.scene = new THREE.Scene();
+
           // Image-based lighting for realistic metal/paint reflections.
           const pmrem = new THREE.PMREMGenerator(this.renderer);
           const envScene = new RoomEnvironment();
           this.scene.environment = pmrem.fromScene(envScene, 0.04).texture;
           pmrem.dispose();
-
-          this.scene = new THREE.Scene();
 
           for (let ii = 0; ii < this.views.length; ++ii) {
             const view = this.views[ii]!;

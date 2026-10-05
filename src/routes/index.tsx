@@ -101,7 +101,7 @@ function Index() {
           this.light.position.y = -20;
           this.scene.add(this.light);
 
-          this.softLight = new THREE.AmbientLight(0xffffff, 2);
+          this.softLight = new THREE.AmbientLight(0xffffff, 0.4);
           this.scene.add(this.softLight);
           const fill = new THREE.DirectionalLight(0xdceafb, 2);
           fill.position.set(-60, 80, 40);

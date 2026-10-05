@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
-import watchGold from "@/assets/watch-gold.jpg";
-import watchSteel from "@/assets/watch-steel.jpg";
-import watchRosegold from "@/assets/watch-rosegold.jpg";
-import watchBlack from "@/assets/watch-black.jpg";
+import watchGold from "@/assets/watch-gold.png";
+import watchSteel from "@/assets/watch-steel.png";
+import watchRosegold from "@/assets/watch-rosegold.png";
+import watchBlack from "@/assets/watch-black.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -67,7 +67,15 @@ function Index() {
           this.renderer.shadowMap.enabled = true;
           this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
           this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+          this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+          this.renderer.toneMappingExposure = 1.1;
           document.body.appendChild(this.renderer.domElement);
+
+          // Image-based lighting for realistic metal/paint reflections.
+          const pmrem = new THREE.PMREMGenerator(this.renderer);
+          const envScene = new RoomEnvironment();
+          this.scene.environment = pmrem.fromScene(envScene, 0.04).texture;
+          pmrem.dispose();
 
           this.scene = new THREE.Scene();
 

@@ -69,7 +69,7 @@ function Index() {
           this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
           this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
           this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-          this.renderer.toneMappingExposure = 1.1;
+           this.renderer.toneMappingExposure = 1.35;
           document.body.appendChild(this.renderer.domElement);
 
           this.scene = new THREE.Scene();
@@ -101,14 +101,17 @@ function Index() {
           this.light.position.y = -20;
           this.scene.add(this.light);
 
-          this.softLight = new THREE.AmbientLight(0xffffff, 0.4);
+           this.softLight = new THREE.AmbientLight(0xffffff, 0.65);
           this.scene.add(this.softLight);
-          const fill = new THREE.DirectionalLight(0xdceafb, 2);
+           const fill = new THREE.DirectionalLight(0xdceafb, 2.7);
           fill.position.set(-60, 80, 40);
           this.scene.add(fill);
-          const rim = new THREE.DirectionalLight(0xffffff, 1.5);
+           const rim = new THREE.DirectionalLight(0xffebd1, 2);
           rim.position.set(30, 20, -90);
           this.scene.add(rim);
+           const sideFill = new THREE.DirectionalLight(0xffffff, 1.4);
+           sideFill.position.set(70, 30, 50);
+           this.scene.add(sideFill);
 
           this.onResize();
           window.addEventListener("resize", this.onResize, false);
@@ -180,7 +183,7 @@ function Index() {
 
           const tau = Math.PI * 2;
           gsap.set(plane.rotation, { y: tau * -0.25 });
-           gsap.set(plane.position, { x: 58, y: -18, z: 0 });
+            gsap.set(plane.position, { x: 18, y: -8, z: 0 });
           scene.render();
 
           const sectionDuration = 1;
@@ -310,11 +313,12 @@ function Index() {
         "/models/jetliner.obj",
         (aircraft) => {
           if (disposed) return;
-          const paint = new THREE.MeshPhysicalMaterial({ color: 0xf4f6f8, metalness: 0.35, roughness: 0.28, clearcoat: 1, clearcoatRoughness: 0.12, side: THREE.DoubleSide });
-          const wingPaint = new THREE.MeshPhysicalMaterial({ color: 0xd3dbe2, metalness: 0.75, roughness: 0.3, clearcoat: 0.6, clearcoatRoughness: 0.2, side: THREE.DoubleSide });
-          const navy = new THREE.MeshPhysicalMaterial({ color: 0x16456c, metalness: 0.4, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.15, side: THREE.DoubleSide });
-          const glass = new THREE.MeshPhysicalMaterial({ color: 0x0e1c2a, metalness: 0.1, roughness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05 });
-          const intake = new THREE.MeshStandardMaterial({ color: 0x1a2126, metalness: 0.9, roughness: 0.25, side: THREE.DoubleSide });
+           const paint = new THREE.MeshPhysicalMaterial({ color: 0xf0f3f3, metalness: 0.22, roughness: 0.24, clearcoat: 1, clearcoatRoughness: 0.08, side: THREE.DoubleSide });
+           const wingPaint = new THREE.MeshPhysicalMaterial({ color: 0xc9d1d4, metalness: 0.55, roughness: 0.29, clearcoat: 0.7, clearcoatRoughness: 0.18, side: THREE.DoubleSide });
+           const navy = new THREE.MeshPhysicalMaterial({ color: 0x102d39, metalness: 0.35, roughness: 0.24, clearcoat: 1, clearcoatRoughness: 0.1, side: THREE.DoubleSide });
+           const champagne = new THREE.MeshPhysicalMaterial({ color: 0xc6a775, metalness: 0.8, roughness: 0.24, side: THREE.DoubleSide });
+           const glass = new THREE.MeshPhysicalMaterial({ color: 0x091b25, metalness: 0.12, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.04 });
+           const intake = new THREE.MeshStandardMaterial({ color: 0x15232a, metalness: 0.75, roughness: 0.34, side: THREE.DoubleSide });
           aircraft.traverse((child) => {
             if (!(child instanceof THREE.Mesh)) return;
             child.material = child.name.includes("Tail") ? navy : child.name.includes("Wings") || child.name.includes("TurboFans") ? wingPaint : paint;
@@ -329,17 +333,43 @@ function Index() {
             detail.add(mesh);
             return mesh;
           };
-          const windowShape = new THREE.SphereGeometry(0.105, 10, 8);
-          for (let z = -5.8; z < 6.2; z += 0.65) {
+           const windowShape = new THREE.SphereGeometry(0.11, 12, 10);
+           const windowTrim = new THREE.MeshStandardMaterial({ color: 0x89979a, metalness: 0.65, roughness: 0.34 });
+           for (let z = -5.7; z < 6.0; z += 0.68) {
             for (const side of [-1, 1]) {
-              const window = addDetail(windowShape, glass, side * 1.13, 6.43, z);
-              window.scale.set(0.38, 0.78, 1);
+               const surround = addDetail(windowShape, windowTrim, side * 1.14, 6.46, z);
+               surround.scale.set(0.48, 1.27, 0.92);
+               const window = addDetail(windowShape, glass, side * 1.17, 6.46, z);
+               window.scale.set(0.44, 1.13, 0.82);
             }
           }
           for (const side of [-1, 1]) {
-            const cockpit = addDetail(new THREE.SphereGeometry(0.34, 16, 10), glass, side * 0.48, 6.76, 7.28);
-            cockpit.scale.set(1.25, 0.4, 0.32);
-            addDetail(new THREE.CircleGeometry(0.46, 24), intake, side * 3.12, 4.74, 2.54);
+             // Continuous pinstripes give the fuselage a considered private-aviation livery.
+             const stripe = new THREE.Mesh(new THREE.TubeGeometry(
+               new THREE.CatmullRomCurve3([
+                 new THREE.Vector3(side * 0.85, 5.91, -7.3),
+                 new THREE.Vector3(side * 1.18, 5.91, -5.7),
+                 new THREE.Vector3(side * 1.23, 5.91, 3.5),
+                 new THREE.Vector3(side * 0.91, 5.91, 7.5),
+               ]), 80, 0.055, 6, false), navy);
+             detail.add(stripe);
+             const accent = new THREE.Mesh(new THREE.TubeGeometry(
+               new THREE.CatmullRomCurve3([
+                 new THREE.Vector3(side * 0.84, 5.82, -7.1),
+                 new THREE.Vector3(side * 1.17, 5.82, -5.6),
+                 new THREE.Vector3(side * 1.22, 5.82, 3.5),
+                 new THREE.Vector3(side * 0.91, 5.82, 7.3),
+               ]), 80, 0.013, 5, false), champagne);
+             detail.add(accent);
+             const cockpit = addDetail(new THREE.SphereGeometry(0.34, 16, 10), glass, side * 0.49, 6.81, 7.25);
+             cockpit.scale.set(1.3, 0.48, 0.52);
+             const engineFace = addDetail(new THREE.CircleGeometry(0.47, 32), intake, side * 3.12, 4.74, 2.56);
+             engineFace.rotation.y = Math.PI;
+             const spinner = addDetail(new THREE.ConeGeometry(0.13, 0.28, 20), wingPaint, side * 3.12, 4.74, 2.58);
+             spinner.rotation.x = Math.PI / 2;
+             const rim = new THREE.Mesh(new THREE.TorusGeometry(0.49, 0.035, 8, 32), champagne);
+             rim.position.set(side * 3.12, 4.74, 2.58);
+             detail.add(rim);
           }
           const jet = new THREE.Group();
           aircraft.position.y = -6.7;

@@ -142,3 +142,184 @@
     color: var(--color-foreground);
   }
 }
+
+/* ---- Airplane scroll story ---- */
+.plane-app {
+  --padding: 10vmin;
+  --font-size-large: 8vw;
+  --font-size-medium: 4vw;
+  --font-size-normal: 2vw;
+  font-family: 'Libre Baskerville', serif;
+  font-size: var(--font-size-normal);
+  color: white;
+}
+
+@media only screen and (min-width: 800px) {
+  .plane-app {
+    --font-size-large: 64px;
+    --font-size-medium: 32px;
+    --font-size-normal: 16px;
+  }
+}
+
+@media only screen and (max-width: 500px) {
+  .plane-app {
+    --font-size-large: 40px;
+    --font-size-medium: 20px;
+    --font-size-normal: 14px;
+  }
+}
+
+html:has(.plane-app),
+body:has(.plane-app) {
+  margin: 0;
+  min-height: 100%;
+  min-width: 100%;
+  background-color: #000;
+  overflow-x: hidden;
+}
+
+body:has(.plane-app) canvas {
+  position: fixed;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.plane-app .content {
+  position: relative;
+  z-index: 1;
+}
+
+.plane-app .content .trigger {
+  position: absolute;
+  top: 0;
+  height: 100%;
+}
+
+.plane-app .content .section {
+  position: relative;
+  padding: var(--padding);
+  width: calc(100vw - calc(var(--padding) * 2));
+  height: calc(100vh - calc(var(--padding) * 2));
+  margin: 0 auto;
+  z-index: 2;
+  color: white;
+}
+
+.plane-app .content .section.dark {
+  color: white;
+  background-color: black;
+}
+
+.plane-app .content .section.right {
+  text-align: right;
+}
+
+.plane-app .content .blueprint {
+  position: relative;
+  background-color: #000;
+  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+  background-position: -2px -2px, -2px -2px, -1px -1px, -1px -1px;
+  background-attachment: fixed;
+}
+
+.plane-app .content .blueprint svg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  stroke: white;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 100;
+}
+
+.plane-app .content .blueprint .dark {
+  background-color: transparent;
+}
+
+.plane-app .content .ground-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.plane-app .content .scroll-cta {
+  position: absolute;
+  bottom: var(--padding);
+  font-size: var(--font-size-medium);
+  opacity: 0;
+}
+
+.plane-app h1,
+.plane-app h2 {
+  font-size: var(--font-size-large);
+  margin: 0vmin 0 2vmin 0;
+  font-weight: 700;
+  display: inline;
+}
+
+.plane-app h3 {
+  font-size: var(--font-size-medium);
+  font-weight: 400;
+  margin: 0;
+}
+
+.plane-app .loading {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-medium);
+}
+
+.plane-app .contact-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  background: black;
+  color: white;
+  border: 1px solid white;
+  padding: 12px 24px;
+  font-family: 'Libre Baskerville', serif;
+  font-size: var(--font-size-normal);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.plane-app .contact-btn:hover {
+  background: white;
+  color: black;
+  border-color: black;
+}
+
+.plane-app .watch-img {
+  display: block;
+  width: min(40vmin, 360px);
+  height: auto;
+  margin-top: 3vmin;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+.plane-app .section.right .watch-img {
+  margin-left: auto;
+}
+
+@media only screen and (max-width: 500px) {
+  .plane-app .contact-btn {
+    top: 10px;
+    right: 10px;
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+}

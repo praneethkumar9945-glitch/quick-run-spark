@@ -348,34 +348,42 @@ function Index() {
            const radome = addDetail(new THREE.LatheGeometry(radomeProfile, 48), paint, 0, 6.08, 7.08);
            radome.rotation.x = Math.PI / 2;
            radome.scale.y = 0.88;
+           const noseCap = addDetail(new THREE.SphereGeometry(0.19, 32, 16), paint, 0, 6.08, 8.31);
+           noseCap.scale.set(0.82, 0.82, 1.08);
            const radomeSeam = addDetail(new THREE.TorusGeometry(0.91, 0.012, 8, 48), champagne, 0, 6.08, 7.14);
            radomeSeam.scale.y = 0.82;
 
            // A real flight deck uses swept, flush glazing rather than bulb-shaped windows.
-           const makeWindshield = (front: boolean) => {
-             const shape = new THREE.Shape();
-             if (front) {
-               shape.moveTo(-0.56, -0.14);
-               shape.lineTo(-0.08, -0.18);
-               shape.lineTo(-0.12, 0.28);
-               shape.lineTo(-0.43, 0.22);
-             } else {
-               shape.moveTo(-0.02, -0.18);
-               shape.lineTo(0.36, -0.12);
-               shape.lineTo(0.28, 0.25);
-               shape.lineTo(-0.07, 0.28);
-             }
-             shape.closePath();
-             return new THREE.ShapeGeometry(shape, 2);
+           const makeCockpitPanel = (side: number, points: Array<[number, number]>) => {
+             const x = side * 1.075;
+             const positions = new Float32Array([
+               x, points[0][0], points[0][1],
+               x, points[1][0], points[1][1],
+               x, points[2][0], points[2][1],
+               x, points[0][0], points[0][1],
+               x, points[2][0], points[2][1],
+               x, points[3][0], points[3][1],
+             ]);
+             const geometry = new THREE.BufferGeometry();
+             geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+             geometry.computeVertexNormals();
+             const panel = new THREE.Mesh(geometry, glass);
+             detail.add(panel);
+             return panel;
            };
            for (const side of [-1, 1]) {
-             const sideOffset = side * 1.035;
-             const frontWindshield = addDetail(makeWindshield(true), glass, sideOffset, 6.67, 7.48);
-             frontWindshield.rotation.y = side * Math.PI / 2;
-             const rearWindshield = addDetail(makeWindshield(false), glass, sideOffset, 6.67, 7.48);
-             rearWindshield.rotation.y = side * Math.PI / 2;
-             const windshieldDivider = addDetail(new THREE.BoxGeometry(0.018, 0.5, 0.025), navy, side * 1.045, 6.7, 7.47);
-             windshieldDivider.rotation.x = -0.08;
+             makeCockpitPanel(side, [
+               [6.57, 7.7],
+               [6.62, 7.24],
+               [7.02, 7.17],
+               [6.97, 7.56],
+             ]);
+             makeCockpitPanel(side, [
+               [6.62, 7.2],
+               [6.64, 6.82],
+               [6.99, 6.88],
+               [7.02, 7.14],
+             ]);
            }
            const windowShape = new THREE.SphereGeometry(0.11, 12, 10);
            const windowTrim = new THREE.MeshStandardMaterial({ color: 0x89979a, metalness: 0.65, roughness: 0.34 });

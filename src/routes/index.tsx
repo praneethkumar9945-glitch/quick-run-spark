@@ -354,7 +354,10 @@ function Index() {
            radomeSeam.scale.y = 0.82;
 
            // A real flight deck uses swept, flush glazing rather than bulb-shaped windows.
-           const makeCockpitPanel = (side: number, points: Array<[number, number]>) => {
+           const makeCockpitPanel = (
+             side: number,
+             points: [[number, number], [number, number], [number, number], [number, number]],
+           ) => {
              const x = side * 1.075;
              const positions = new Float32Array([
                x, points[0][0], points[0][1],

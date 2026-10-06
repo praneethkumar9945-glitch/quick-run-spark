@@ -335,8 +335,17 @@ function Index() {
           };
            // Extend the original low-detail fuselage into a smooth, tapered radome.
            // The overlap sits inside the OBJ shell so the new nose reads as one continuous body.
-           const radome = addDetail(new THREE.SphereGeometry(1, 48, 24), paint, 0, 6.08, 7.76);
-           radome.scale.set(1.17, 0.94, 1.32);
+           const radomeProfile = [
+             new THREE.Vector2(1.05, 0),
+             new THREE.Vector2(1.03, 0.25),
+             new THREE.Vector2(0.88, 0.62),
+             new THREE.Vector2(0.62, 1.02),
+             new THREE.Vector2(0.3, 1.35),
+             new THREE.Vector2(0.05, 1.52),
+           ];
+           const radome = addDetail(new THREE.LatheGeometry(radomeProfile, 48), paint, 0, 6.08, 7.08);
+           radome.rotation.x = Math.PI / 2;
+           radome.scale.y = 0.84;
            const radomeSeam = addDetail(new THREE.TorusGeometry(0.91, 0.012, 8, 48), champagne, 0, 6.08, 7.14);
            radomeSeam.scale.y = 0.82;
 

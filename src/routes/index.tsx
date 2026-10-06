@@ -336,16 +336,18 @@ function Index() {
            // Extend the original low-detail fuselage into a smooth, tapered radome.
            // The overlap sits inside the OBJ shell so the new nose reads as one continuous body.
            const radomeProfile = [
-             new THREE.Vector2(1.05, 0),
-             new THREE.Vector2(1.03, 0.25),
-             new THREE.Vector2(0.88, 0.62),
-             new THREE.Vector2(0.62, 1.02),
-             new THREE.Vector2(0.3, 1.35),
-             new THREE.Vector2(0.05, 1.52),
+             new THREE.Vector2(1.04, 0),
+             new THREE.Vector2(1.02, 0.2),
+             new THREE.Vector2(0.94, 0.48),
+             new THREE.Vector2(0.78, 0.78),
+             new THREE.Vector2(0.55, 1.04),
+             new THREE.Vector2(0.32, 1.24),
+             new THREE.Vector2(0.15, 1.35),
+             new THREE.Vector2(0.1, 1.39),
            ];
            const radome = addDetail(new THREE.LatheGeometry(radomeProfile, 48), paint, 0, 6.08, 7.08);
            radome.rotation.x = Math.PI / 2;
-           radome.scale.y = 0.84;
+           radome.scale.y = 0.88;
            const radomeSeam = addDetail(new THREE.TorusGeometry(0.91, 0.012, 8, 48), champagne, 0, 6.08, 7.14);
            radomeSeam.scale.y = 0.82;
 
@@ -353,25 +355,27 @@ function Index() {
            const makeWindshield = (front: boolean) => {
              const shape = new THREE.Shape();
              if (front) {
-               shape.moveTo(-0.02, -0.18);
-               shape.lineTo(0.52, -0.12);
-               shape.lineTo(0.38, 0.26);
-               shape.lineTo(-0.08, 0.31);
+               shape.moveTo(-0.56, -0.14);
+               shape.lineTo(-0.08, -0.18);
+               shape.lineTo(-0.12, 0.28);
+               shape.lineTo(-0.43, 0.22);
              } else {
-               shape.moveTo(-0.48, -0.12);
-               shape.lineTo(-0.04, -0.18);
-               shape.lineTo(-0.1, 0.31);
-               shape.lineTo(-0.42, 0.22);
+               shape.moveTo(-0.02, -0.18);
+               shape.lineTo(0.36, -0.12);
+               shape.lineTo(0.28, 0.25);
+               shape.lineTo(-0.07, 0.28);
              }
              shape.closePath();
              return new THREE.ShapeGeometry(shape, 2);
            };
            for (const side of [-1, 1]) {
-             const sideOffset = side * 1.04;
-             const frontWindshield = addDetail(makeWindshield(true), glass, sideOffset, 6.57, 7.47);
+             const sideOffset = side * 1.035;
+             const frontWindshield = addDetail(makeWindshield(true), glass, sideOffset, 6.67, 7.48);
              frontWindshield.rotation.y = side * Math.PI / 2;
-             const rearWindshield = addDetail(makeWindshield(false), glass, sideOffset, 6.57, 7.47);
+             const rearWindshield = addDetail(makeWindshield(false), glass, sideOffset, 6.67, 7.48);
              rearWindshield.rotation.y = side * Math.PI / 2;
+             const windshieldDivider = addDetail(new THREE.BoxGeometry(0.018, 0.5, 0.025), navy, side * 1.045, 6.7, 7.47);
+             windshieldDivider.rotation.x = -0.08;
            }
            const windowShape = new THREE.SphereGeometry(0.11, 12, 10);
            const windowTrim = new THREE.MeshStandardMaterial({ color: 0x89979a, metalness: 0.65, roughness: 0.34 });

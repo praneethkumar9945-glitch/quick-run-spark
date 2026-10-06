@@ -317,7 +317,7 @@ function Index() {
            const wingPaint = new THREE.MeshPhysicalMaterial({ color: 0xc9d1d4, metalness: 0.55, roughness: 0.29, clearcoat: 0.7, clearcoatRoughness: 0.18, side: THREE.DoubleSide });
            const navy = new THREE.MeshPhysicalMaterial({ color: 0x102d39, metalness: 0.35, roughness: 0.24, clearcoat: 1, clearcoatRoughness: 0.1, side: THREE.DoubleSide });
            const champagne = new THREE.MeshPhysicalMaterial({ color: 0xc6a775, metalness: 0.8, roughness: 0.24, side: THREE.DoubleSide });
-           const glass = new THREE.MeshPhysicalMaterial({ color: 0x091b25, metalness: 0.12, roughness: 0.08, clearcoat: 1, clearcoatRoughness: 0.04 });
+            const glass = new THREE.MeshPhysicalMaterial({ color: 0x071820, metalness: 0.18, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.03, side: THREE.DoubleSide });
            const intake = new THREE.MeshStandardMaterial({ color: 0x15232a, metalness: 0.75, roughness: 0.34, side: THREE.DoubleSide });
           aircraft.traverse((child) => {
             if (!(child instanceof THREE.Mesh)) return;
@@ -333,6 +333,37 @@ function Index() {
             detail.add(mesh);
             return mesh;
           };
+           // Extend the original low-detail fuselage into a smooth, tapered radome.
+           // The overlap sits inside the OBJ shell so the new nose reads as one continuous body.
+           const radome = addDetail(new THREE.SphereGeometry(1, 48, 24), paint, 0, 6.08, 7.76);
+           radome.scale.set(1.17, 0.94, 1.32);
+           const radomeSeam = addDetail(new THREE.TorusGeometry(0.91, 0.012, 8, 48), champagne, 0, 6.08, 7.14);
+           radomeSeam.scale.y = 0.82;
+
+           // A real flight deck uses swept, flush glazing rather than bulb-shaped windows.
+           const makeWindshield = (front: boolean) => {
+             const shape = new THREE.Shape();
+             if (front) {
+               shape.moveTo(-0.02, -0.18);
+               shape.lineTo(0.52, -0.12);
+               shape.lineTo(0.38, 0.26);
+               shape.lineTo(-0.08, 0.31);
+             } else {
+               shape.moveTo(-0.48, -0.12);
+               shape.lineTo(-0.04, -0.18);
+               shape.lineTo(-0.1, 0.31);
+               shape.lineTo(-0.42, 0.22);
+             }
+             shape.closePath();
+             return new THREE.ShapeGeometry(shape, 2);
+           };
+           for (const side of [-1, 1]) {
+             const sideOffset = side * 1.04;
+             const frontWindshield = addDetail(makeWindshield(true), glass, sideOffset, 6.57, 7.47);
+             frontWindshield.rotation.y = side * Math.PI / 2;
+             const rearWindshield = addDetail(makeWindshield(false), glass, sideOffset, 6.57, 7.47);
+             rearWindshield.rotation.y = side * Math.PI / 2;
+           }
            const windowShape = new THREE.SphereGeometry(0.11, 12, 10);
            const windowTrim = new THREE.MeshStandardMaterial({ color: 0x89979a, metalness: 0.65, roughness: 0.34 });
            for (let z = -5.7; z < 6.0; z += 0.68) {
@@ -361,8 +392,6 @@ function Index() {
                  new THREE.Vector3(side * 0.91, 5.82, 7.3),
                ]), 80, 0.013, 5, false), champagne);
              detail.add(accent);
-             const cockpit = addDetail(new THREE.SphereGeometry(0.34, 16, 10), glass, side * 0.49, 6.81, 7.25);
-             cockpit.scale.set(1.3, 0.48, 0.52);
              const engineFace = addDetail(new THREE.CircleGeometry(0.47, 32), intake, side * 3.12, 4.74, 2.56);
              engineFace.rotation.y = Math.PI;
              const spinner = addDetail(new THREE.ConeGeometry(0.13, 0.28, 20), wingPaint, side * 3.12, 4.74, 2.58);

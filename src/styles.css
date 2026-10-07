@@ -303,12 +303,24 @@ body:has(.plane-app) canvas {
 }
 
 .plane-app .watch-img {
+  --watch-proximity: 0;
+  --watch-glow: oklch(0.85 0.12 83);
+  --watch-glow-core: oklch(0.97 0.04 83);
   display: block;
   width: min(40vmin, 360px);
   height: auto;
   margin-top: 3vmin;
   border-radius: 14px;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  filter:
+    brightness(calc(1 + var(--watch-proximity) * 0.22))
+    drop-shadow(0 0 calc(var(--watch-proximity) * 12px) oklch(from var(--watch-glow-core) l c h / calc(var(--watch-proximity) * 0.9)))
+    drop-shadow(0 0 calc(var(--watch-proximity) * 38px) oklch(from var(--watch-glow) l c h / calc(var(--watch-proximity) * 0.8)));
+  transition: filter 180ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plane-app .watch-img { transition: none; }
 }
 
 .plane-app .section.right .watch-img {

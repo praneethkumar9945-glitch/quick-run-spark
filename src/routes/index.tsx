@@ -4,6 +4,7 @@ import watchGold from "@/assets/watch-gold.png";
 import watchSteel from "@/assets/watch-steel.png";
 import watchRosegold from "@/assets/watch-rosegold.png";
 import watchBlack from "@/assets/watch-black.png";
+import noseSvg from "@/assets/airplane-nose.svg?raw";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -35,7 +36,7 @@ function Index() {
     const cleanups: Array<() => void> = [];
 
     (async () => {
-      const [{ gsap }, { ScrollTrigger }, { ScrollToPlugin }, THREE, { OBJLoader }, { RoomEnvironment }] =
+      const [{ gsap }, { ScrollTrigger }, { ScrollToPlugin }, THREE, { OBJLoader }, { RoomEnvironment }, { SVGLoader }] =
         await Promise.all([
           import("gsap"),
           import("gsap/ScrollTrigger"),
@@ -43,6 +44,7 @@ function Index() {
           import("three"),
           import("three/examples/jsm/loaders/OBJLoader.js"),
           import("three/examples/jsm/environments/RoomEnvironment.js"),
+          import("three/examples/jsm/loaders/SVGLoader.js"),
         ]);
       if (disposed) return;
       gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
@@ -81,7 +83,8 @@ function Index() {
           pmrem.dispose();
 
           for (let ii = 0; ii < this.views.length; ++ii) {
-            const view = this.views[ii]!;
+            const view = this.views[ii];
+            if (!view) continue;
             const camera = new THREE.PerspectiveCamera(
               45,
               window.innerWidth / window.innerHeight,
@@ -136,7 +139,8 @@ function Index() {
 
         render = () => {
           for (let ii = 0; ii < this.views.length; ++ii) {
-            const view = this.views[ii]!;
+            const view = this.views[ii];
+            if (!view) continue;
             const camera = view.camera;
             const bottom = Math.floor(this.h * view.bottom);
             const height = Math.floor(this.h * view.height);
@@ -156,7 +160,8 @@ function Index() {
           this.w = window.innerWidth;
           this.h = window.innerHeight;
           for (let ii = 0; ii < this.views.length; ++ii) {
-            const camera = this.views[ii]!.camera;
+            const camera = this.views[ii]?.camera;
+            if (!camera) continue;
             camera.aspect = this.w / this.h;
             camera.position.z = 180;
             camera.updateProjectionMatrix();
@@ -321,6 +326,15 @@ function Index() {
            const intake = new THREE.MeshStandardMaterial({ color: 0x15232a, metalness: 0.75, roughness: 0.34, side: THREE.DoubleSide });
           aircraft.traverse((child) => {
             if (!(child instanceof THREE.Mesh)) return;
+            if (child.name.includes("Fusalage")) {
+              // Remove the old blunt front instead of stacking a second nose over it.
+              const positions = child.geometry.getAttribute("position");
+              for (let i = 0; i < positions.count; i++) {
+                if (positions.getZ(i) > 5.9) positions.setZ(i, 5.9);
+              }
+              positions.needsUpdate = true;
+              child.geometry.computeVertexNormals();
+            }
             child.material = child.name.includes("Tail") ? navy : child.name.includes("Wings") || child.name.includes("TurboFans") ? wingPaint : paint;
             child.castShadow = true;
             child.receiveShadow = true;
@@ -333,61 +347,62 @@ function Index() {
             detail.add(mesh);
             return mesh;
           };
-           // Extend the original low-detail fuselage into a smooth, tapered radome.
-           // The overlap sits inside the OBJ shell so the new nose reads as one continuous body.
-           const radomeProfile = [
-             new THREE.Vector2(1.04, 0),
-             new THREE.Vector2(1.02, 0.2),
-             new THREE.Vector2(0.94, 0.48),
-             new THREE.Vector2(0.78, 0.78),
-             new THREE.Vector2(0.55, 1.04),
-             new THREE.Vector2(0.32, 1.24),
-             new THREE.Vector2(0.15, 1.35),
-             new THREE.Vector2(0.1, 1.39),
-           ];
-           const radome = addDetail(new THREE.LatheGeometry(radomeProfile, 48), paint, 0, 6.08, 7.08);
-           radome.rotation.x = Math.PI / 2;
-           radome.scale.y = 0.88;
-           const noseCap = addDetail(new THREE.SphereGeometry(0.19, 32, 16), paint, 0, 6.08, 8.31);
-           noseCap.scale.set(0.82, 0.82, 1.08);
-           const radomeSeam = addDetail(new THREE.TorusGeometry(0.91, 0.012, 8, 48), champagne, 0, 6.08, 7.14);
-           radomeSeam.scale.y = 0.82;
-
-           // A real flight deck uses swept, flush glazing rather than bulb-shaped windows.
-           const makeCockpitPanel = (
-             side: number,
-             points: [[number, number], [number, number], [number, number], [number, number]],
-           ) => {
-             const x = side * 1.075;
-             const positions = new Float32Array([
-               x, points[0][0], points[0][1],
-               x, points[1][0], points[1][1],
-               x, points[2][0], points[2][1],
-               x, points[0][0], points[0][1],
-               x, points[2][0], points[2][1],
-               x, points[3][0], points[3][1],
-             ]);
-             const geometry = new THREE.BufferGeometry();
-             geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-             geometry.computeVertexNormals();
-             const panel = new THREE.Mesh(geometry, glass);
-             detail.add(panel);
-             return panel;
-           };
-           for (const side of [-1, 1]) {
-             makeCockpitPanel(side, [
-               [6.57, 7.7],
-               [6.62, 7.24],
-               [7.02, 7.17],
-               [6.97, 7.56],
-             ]);
-             makeCockpitPanel(side, [
-               [6.62, 7.2],
-               [6.64, 6.82],
-               [6.99, 6.88],
-               [7.02, 7.14],
-             ]);
-           }
+          // The editable SVG is the source of truth for both the nose and windshield.
+          const svgPaths = new SVGLoader().parse(noseSvg).paths;
+          const pathId = (path: (typeof svgPaths)[number]) => {
+            const node = path.userData?.['node'];
+            return node instanceof Element ? node.id : "";
+          };
+          const profilePath = svgPaths.find(path => pathId(path) === "nose-profile");
+          const profile = profilePath?.subPaths[0]?.getPoints(100) ?? [];
+          const radomeProfile = profile.map(point => new THREE.Vector2(point.y / 100, point.x / 100));
+          const radomeGeometry = new THREE.LatheGeometry(radomeProfile, 96);
+          radomeGeometry.rotateX(Math.PI / 2);
+          radomeGeometry.scale(1, 0.813, 1);
+          addDetail(radomeGeometry, paint, 0, 6.112, 5.9);
+          const radiusAt = (distance: number) => {
+            for (let i = 1; i < profile.length; i++) {
+              const previous = profile[i - 1];
+              const next = profile[i];
+              if (!previous || !next || next.x < distance * 100) continue;
+              const mix = (distance * 100 - previous.x) / (next.x - previous.x || 1);
+              return THREE.MathUtils.lerp(previous.y, next.y, mix) / 100;
+            }
+            return 0;
+          };
+          const surfacePoint = (distance: number, angle: number, side: number, offset = 0.012) => {
+            const radius = radiusAt(distance) + offset;
+            return new THREE.Vector3(side * radius * Math.sin(angle), 6.112 + radius * 0.813 * Math.cos(angle), 5.9 + distance);
+          };
+          for (const path of svgPaths.filter(path => pathId(path).startsWith("windshield"))) {
+            for (const side of [-1, 1]) {
+              for (const shape of SVGLoader.createShapes(path)) {
+                const geometry = new THREE.ShapeGeometry(shape, 16);
+                // Subdivide the SVG panels so glazing follows the curved shell, not a flat billboard.
+                const source = geometry.toNonIndexed();
+                geometry.dispose();
+                const vertices = source.getAttribute("position");
+                const curved: number[] = [];
+                const subdivide = (a: any, b: any, c: any, depth: number) => {
+                  if (depth > 0) {
+                    const ab = a.clone().lerp(b, 0.5), bc = b.clone().lerp(c, 0.5), ca = c.clone().lerp(a, 0.5);
+                    subdivide(a, ab, ca, depth - 1); subdivide(ab, b, bc, depth - 1);
+                    subdivide(ca, bc, c, depth - 1); subdivide(ab, bc, ca, depth - 1);
+                    return;
+                  }
+                  for (const point of [a, b, c]) curved.push(...surfacePoint(point.x / 100, point.y / 100, side).toArray());
+                };
+                for (let i = 0; i < vertices.count; i += 3) {
+                  subdivide(new THREE.Vector2(vertices.getX(i), vertices.getY(i)), new THREE.Vector2(vertices.getX(i + 1), vertices.getY(i + 1)), new THREE.Vector2(vertices.getX(i + 2), vertices.getY(i + 2)), 3);
+                }
+                source.dispose();
+                const panel = new THREE.BufferGeometry();
+                panel.setAttribute("position", new THREE.Float32BufferAttribute(curved, 3));
+                panel.computeVertexNormals();
+                detail.add(new THREE.Mesh(panel, glass));
+              }
+            }
+          }
            const windowShape = new THREE.SphereGeometry(0.11, 12, 10);
            const windowTrim = new THREE.MeshStandardMaterial({ color: 0x89979a, metalness: 0.65, roughness: 0.34 });
            for (let z = -5.7; z < 6.0; z += 0.68) {

@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Derive the aircraft nose and curved windshield from the shared SVG profile; replace the original front geometry to avoid overlapping shells.

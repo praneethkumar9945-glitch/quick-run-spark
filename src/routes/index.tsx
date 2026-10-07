@@ -349,7 +349,11 @@ function Index() {
           };
           // The editable SVG is the source of truth for both the nose and windshield.
           const svgPaths = new SVGLoader().parse(noseSvg).paths;
-          const profilePath = svgPaths.find(path => path.userData?.node.id === "nose-profile");
+          const pathId = (path: (typeof svgPaths)[number]) => {
+            const node = path.userData?.['node'];
+            return node instanceof Element ? node.id : "";
+          };
+          const profilePath = svgPaths.find(path => pathId(path) === "nose-profile");
           const profile = profilePath?.subPaths[0]?.getPoints(100) ?? [];
           const radomeProfile = profile.map(point => new THREE.Vector2(point.y / 100, point.x / 100));
           const radomeGeometry = new THREE.LatheGeometry(radomeProfile, 96);
@@ -370,11 +374,10 @@ function Index() {
             const radius = radiusAt(distance) + offset;
             return new THREE.Vector3(side * radius * Math.sin(angle), 6.112 + radius * 0.813 * Math.cos(angle), 5.9 + distance);
           };
-          for (const path of svgPaths.filter(path => path.userData?.node.id.startsWith("windshield"))) {
+          for (const path of svgPaths.filter(path => pathId(path).startsWith("windshield"))) {
             for (const side of [-1, 1]) {
               for (const shape of SVGLoader.createShapes(path)) {
                 const geometry = new THREE.ShapeGeometry(shape, 16);
-                const positions = geometry.getAttribute("position");
                 // Subdivide the SVG panels so glazing follows the curved shell, not a flat billboard.
                 const source = geometry.toNonIndexed();
                 geometry.dispose();

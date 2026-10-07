@@ -48,6 +48,8 @@ function Index() {
         ]);
       if (disposed) return;
       gsap.registerPlugin(ScrollTrigger, ScrollToPlugin);
+      const watches = Array.from(rootRef.current?.querySelectorAll<HTMLImageElement>(".watch-img") ?? []);
+      cleanups.push(() => watches.forEach(watch => watch.style.removeProperty("--watch-proximity")));
 
       class Scene {
         views: Array<{ bottom: number; height: number; camera: any }>;
@@ -58,8 +60,16 @@ function Index() {
         modelGroup: any;
         w = 0;
         h = 0;
+        aircraftSamples: Array<InstanceType<typeof THREE.Vector3>> = [];
+        projectedSample = new THREE.Vector3();
 
         constructor(model: any) {
+          model.updateWorldMatrix(true, true);
+          const bounds = new THREE.Box3().setFromObject(model);
+          // Sample the fuselage from tail to nose, in the animated group's local space.
+          for (let i = 0; i <= 12; i++) {
+            this.aircraftSamples.push(new THREE.Vector3(0, 0, THREE.MathUtils.lerp(bounds.min.z, bounds.max.z, i / 12)));
+          }
           this.views = [
             { bottom: 0, height: 1, camera: null },
             { bottom: 0, height: 0, camera: null },
@@ -154,6 +164,32 @@ function Index() {
             camera.updateProjectionMatrix();
             this.renderer.render(this.scene, camera);
           }
+          const camera = this.views[0]?.camera;
+          if (!camera || !this.modelGroup) return;
+          this.modelGroup.updateWorldMatrix(true, false);
+          const reach = Math.max(150, Math.min(this.w, this.h) * 0.28);
+          const aircraftPixels = this.aircraftSamples.map(sample => {
+            this.projectedSample.copy(sample).applyMatrix4(this.modelGroup.matrixWorld).project(camera);
+            return {
+              x: (this.projectedSample.x + 1) * this.w / 2,
+              y: (1 - this.projectedSample.y) * this.h / 2,
+              visible: this.projectedSample.z >= -1 && this.projectedSample.z <= 1,
+            };
+          });
+          watches.forEach(watch => {
+            const rect = watch.getBoundingClientRect();
+            let distance = Infinity;
+            if (rect.bottom > 0 && rect.top < this.h) {
+              for (const point of aircraftPixels) {
+                if (!point.visible || point.x < -reach || point.x > this.w + reach || point.y < -reach || point.y > this.h + reach) continue;
+                const dx = Math.max(rect.left - point.x, 0, point.x - rect.right);
+                const dy = Math.max(rect.top - point.y, 0, point.y - rect.bottom);
+                distance = Math.min(distance, Math.hypot(dx, dy));
+              }
+            }
+            const proximity = 1 - THREE.MathUtils.smoothstep(distance, 0, reach);
+            watch.style.setProperty("--watch-proximity", proximity.toFixed(3));
+          });
         };
 
         onResize = () => {
